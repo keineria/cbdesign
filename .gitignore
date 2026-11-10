@@ -1,0 +1,3 @@
+node_modules/
+assets/shots/*.png
+.DS_Store

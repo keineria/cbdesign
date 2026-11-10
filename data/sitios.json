@@ -1,0 +1,101 @@
+[
+ {
+  "slug": "fajasmelibelt",
+  "nombre": "Fajas Melibelt",
+  "dominio": "fajasmelibelt.com",
+  "url": "https://fajasmelibelt.com",
+  "cat": "tienda",
+  "etiqueta": "Tienda virtual · Colombia",
+  "desc": "Ecommerce de fajas colombianas con catálogo por necesidad, pagos en línea y promociones."
+ },
+ {
+  "slug": "fajasmelibeltusa",
+  "nombre": "Melibelt USA",
+  "dominio": "fajasmelibeltusa.com",
+  "url": "https://fajasmelibeltusa.com",
+  "cat": "tienda",
+  "etiqueta": "Tienda virtual · Estados Unidos",
+  "desc": "Tienda en inglés y dólares para el mercado estadounidense, con envíos y checkout internacional."
+ },
+ {
+  "slug": "melibelt-es",
+  "nombre": "Melibelt España",
+  "dominio": "melibelt.es",
+  "url": "https://melibelt.es",
+  "cat": "tienda",
+  "etiqueta": "Tienda virtual · España",
+  "desc": "Expansión a Europa: tienda en euros con infraestructura propia para el mercado español."
+ },
+ {
+  "slug": "conetco",
+  "nombre": "Conetco",
+  "dominio": "conetco.co",
+  "url": "https://conetco.co",
+  "cat": "tienda",
+  "etiqueta": "Tienda virtual · Fibra óptica",
+  "desc": "Catálogo y venta en línea de conectores, patchcords y mufas para redes de fibra óptica."
+ },
+ {
+  "slug": "dauntoque",
+  "nombre": "Da un Toque",
+  "dominio": "dauntoque.com",
+  "url": "https://dauntoque.com",
+  "cat": "producto",
+  "etiqueta": "Producto digital · Tarjetas NFC",
+  "desc": "Tarjetas de presentación inteligentes con perfil digital, estadísticas y compra en línea."
+ },
+ {
+  "slug": "colombiabirdfair",
+  "nombre": "Colombia Birdfair",
+  "dominio": "colombiabirdfair.com",
+  "url": "https://colombiabirdfair.com",
+  "cat": "evento",
+  "etiqueta": "Evento internacional · Registro en línea",
+  "desc": "Sitio oficial de la feria de aves: conferencistas, salidas de pajareo, registro y pagos."
+ },
+ {
+  "slug": "dacnisvalle",
+  "nombre": "Dacnis Valle",
+  "dominio": "dacnisvalle.com",
+  "url": "https://dacnisvalle.com",
+  "cat": "corporativo",
+  "etiqueta": "Sitio institucional · Aviturismo",
+  "desc": "Portal de la asociación de observadores de aves del Valle del Cauca, con galería y recursos."
+ },
+ {
+  "slug": "vectrar",
+  "nombre": "Vectrar",
+  "dominio": "vectrar.com",
+  "url": "https://vectrar.com",
+  "cat": "corporativo",
+  "etiqueta": "Sitio corporativo · Arquitectura e inmobiliaria",
+  "desc": "Estudio de arquitectura en Cali: portafolio de proyectos, inmuebles, casas modulares y cotización por WhatsApp."
+ },
+ {
+  "slug": "lasevillana",
+  "nombre": "La Sevillana",
+  "dominio": "lasevillana.com.co",
+  "url": "https://lasevillana.com.co",
+  "cat": "corporativo",
+  "etiqueta": "Sitio corporativo · Gastronomía",
+  "desc": "Presencia digital para carnicerías y restaurantes, con sedes, reservas y trabajo con nosotros."
+ },
+ {
+  "slug": "nexxosstudio",
+  "nombre": "Nexxos Studio",
+  "dominio": "nexxosstudio.com",
+  "url": "https://nexxosstudio.com",
+  "cat": "corporativo",
+  "etiqueta": "Sitio corporativo · Industria textil",
+  "desc": "Estudio textil que crea marcas de principio a fin: proceso, servicios y contacto comercial."
+ },
+ {
+  "slug": "evocapitalgroup",
+  "nombre": "Evo Capital Group",
+  "dominio": "evocapitalgroup.com",
+  "url": "https://evocapitalgroup.com",
+  "cat": "corporativo",
+  "etiqueta": "Sitio corporativo · Finanzas · EE. UU.",
+  "desc": "Plataforma de banca de inversión y financiación empresarial, con soluciones, transacciones y solicitud en línea."
+ }
+]
