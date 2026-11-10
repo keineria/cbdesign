@@ -63,6 +63,15 @@
   "desc": "Portal de la asociación de observadores de aves del Valle del Cauca, con galería y recursos."
  },
  {
+  "slug": "vectrar",
+  "nombre": "Vectrar",
+  "dominio": "vectrar.com",
+  "url": "https://vectrar.com",
+  "cat": "corporativo",
+  "etiqueta": "Sitio corporativo · Arquitectura e inmobiliaria",
+  "desc": "Estudio de arquitectura en Cali: portafolio de proyectos, inmuebles, casas modulares y cotización por WhatsApp."
+ },
+ {
   "slug": "lasevillana",
   "nombre": "La Sevillana",
   "dominio": "lasevillana.com.co",
