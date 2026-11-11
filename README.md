@@ -3,6 +3,8 @@
 Micrositio estático con los sitios web desarrollados por [CBdesign](https://cbdesign.com.co).
 Se publica en `portafolio.cbdesign.com.co`.
 
+El rediseño del sitio principal (cbdesign.com.co) vive en [`sitio/`](sitio/README.md).
+
 ## Estructura
 
 - `index.html`: la página.
