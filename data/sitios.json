@@ -97,5 +97,14 @@
   "cat": "corporativo",
   "etiqueta": "Sitio corporativo · Finanzas · EE. UU.",
   "desc": "Plataforma de banca de inversión y financiación empresarial, con soluciones, transacciones y solicitud en línea."
+ },
+ {
+  "slug": "commonbird",
+  "nombre": "Commonbird",
+  "dominio": "cb.commonbird.com",
+  "url": "https://cb.commonbird.com/",
+  "cat": "producto",
+  "etiqueta": "Plataforma web · Comunidad de pajareros",
+  "desc": "Red social para observadores de aves: muro de avistamientos, checklists, especies, cantos y bandadas."
  }
 ]

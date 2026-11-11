@@ -35,7 +35,6 @@
 
   function pintar(lista) {
     lista.forEach(function (p) { grid.appendChild(tarjeta(p)); });
-    document.getElementById('n-proy').textContent = lista.length;
 
     // En pantallas táctiles no hay hover: se recorre la tarjeta que queda al centro.
     if (window.matchMedia('(hover: none)').matches && 'IntersectionObserver' in window) {
