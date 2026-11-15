@@ -2,19 +2,22 @@
 """Genera las páginas de servicio de cbdesign.com.co (SEO local para Cali).
 
 Uso:  python3 tools/generar-servicios.py
-Escribe sitio/<slug>/index.html por cada servicio y actualiza sitio/sitemap.xml.
+Escribe sitio/<slug>/index.html (español) y sitio/en/<slug>/index.html (inglés, textos en
+tools/servicios_en.py) por cada servicio. El sitemap lo escribe tools/generar-ingles.py.
 Para cambiar textos, edita SERVICIOS aquí y vuelve a ejecutar; no edites el HTML generado.
 """
 import datetime
 import html
 import json
 import pathlib
+import re
+import sys
 from urllib.parse import quote
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent / "sitio"
 BASE = "https://cbdesign.com.co"
 WA = "https://wa.me/573164956994?text="
-VERSION = "2"  # súbelo al cambiar CSS o JS
+VERSION = "3"  # súbelo al cambiar CSS o JS
 
 PROYECTOS = {
     "fajasmelibelt": ("Fajas Melibelt", "https://fajasmelibelt.com", "Tienda virtual · Colombia"),
@@ -241,119 +244,152 @@ SERVICIOS = [
     },
 ]
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from servicios_en import PROYECTOS_EN, SERVICIOS_EN  # noqa: E402
+
 e = html.escape
-ICONO_WA = __import__("re").search(r'<a class="wa".*?(<svg.*?</svg>)', (RAIZ / "index.html").read_text(encoding="utf-8"), __import__("re").S).group(1)
+ICONO_WA = re.search(r'<a class="wa".*?(<svg.*?</svg>)', (RAIZ / "index.html").read_text(encoding="utf-8"), re.S).group(1)
+GA4 = re.search(r'<meta name="cb-ga4" content="([^"]*)"', (RAIZ / "index.html").read_text(encoding="utf-8")).group(1)
+
+ES_POR_SLUG = {s["slug"]: s for s in SERVICIOS}
+EN_POR_PAR = {s["par"]: s for s in SERVICIOS_EN}
+
+# Textos fijos de la plantilla por idioma
+L = {
+    "es": dict(
+        html_lang="es-CO", og_locale="es_CO", raiz="/", saltar="Saltar al contenido", inicio_aria="CBdesign, inicio",
+        nav_aria="Principal", nav=[("servicios", "Servicios"), ("proceso", "Proceso"), ("proyectos", "Proyectos"), ("dominios", "Dominios"), ("preguntas", "Preguntas")],
+        cotizar="Cotizar", menu="Abrir menú", migas_aria="Ruta de navegación", inicio="Inicio",
+        cta="Cotizar por WhatsApp", ver_incluye="Ver qué incluye", incluye="Qué incluye",
+        proceso="Proceso", proceso_h2="Cómo trabajamos contigo.", proyectos="Proyectos", proyectos_h2="Trabajo real, en línea hoy.",
+        alt_proy="Sitio de {n}, desarrollado por CBdesign", portafolio="Ver el portafolio completo",
+        faq="Preguntas frecuentes", faq_h2="Lo que suelen preguntarnos.",
+        cierre='Hablemos de <span class="grad">tu proyecto.</span>',
+        cierre_p="Estamos en Cali, en la Calle 6 # 9-45, y trabajamos con empresas de todo el Valle del Cauca y de otros países.",
+        escribir="Escribir por WhatsApp", otros_aria="Otros servicios", sufijo=" en Cali", wa_aria="Escribir a CBdesign por WhatsApp",
+        pie_p="Desarrollo web y marketing digital en Cali para empresas que quieren crecer.",
+        servicios="Servicios", empresa="Empresa", portafolio_c="Portafolio", buscar="Buscar dominio", contacto="Contacto",
+        legal="CBdesign. Una marca de Commonbird · NIT 900792449. Todos los derechos reservados.",
+        otro_idioma=("EN", "en", "English"),
+    ),
+    "en": dict(
+        html_lang="en", og_locale="en_US", raiz="/en/", saltar="Skip to content", inicio_aria="CBdesign, home",
+        nav_aria="Main", nav=[("servicios", "Services"), ("proceso", "Process"), ("proyectos", "Work"), ("dominios", "Domains"), ("preguntas", "FAQ")],
+        cotizar="Get a quote", menu="Open menu", migas_aria="Breadcrumb", inicio="Home",
+        cta="Get a quote on WhatsApp", ver_incluye="See what is included", incluye="What is included",
+        proceso="Process", proceso_h2="How we work with you.", proyectos="Work", proyectos_h2="Real work, live today.",
+        alt_proy="{n} website, built by CBdesign", portafolio="See the full portfolio",
+        faq="Frequently asked questions", faq_h2="What clients usually ask.",
+        cierre='Let’s talk about <span class="grad">your project.</span>',
+        cierre_p="We are based in Cali, Colombia (UTC-5), and work with companies in the United States, Latin America and Europe.",
+        escribir="Message us on WhatsApp", otros_aria="Other services", sufijo="", wa_aria="Message CBdesign on WhatsApp",
+        pie_p="Nearshore web development and digital marketing for companies that want to grow.",
+        servicios="Services", empresa="Company", portafolio_c="Portfolio", buscar="Domain search", contacto="Contact",
+        legal="CBdesign. A Commonbird brand · NIT 900792449. All rights reserved.",
+        otro_idioma=("ES", "es", "Español"),
+    ),
+}
 
 
 def wa(texto):
     return WA + quote(texto)
 
 
-def pie():
-    enlaces = "\n".join(f'      <a href="/{s["slug"]}/">{e(s["corto"])}</a>' for s in SERVICIOS)
+def ruta(s, lang):
+    return f"/{s['slug']}/" if lang == "es" else f"/en/{s['slug']}/"
+
+
+def pareja(s, lang):
+    """La misma página en el otro idioma."""
+    return EN_POR_PAR[s["slug"]] if lang == "es" else ES_POR_SLUG[s["par"]]
+
+
+def idioma_link(lang, href):
+    cod, hl, nombre = L[lang]["otro_idioma"]
+    return f'<a class="idioma" href="{href}" hreflang="{hl}" lang="{hl}" data-idioma="{hl}" aria-label="{cod}, {nombre}">{cod}</a>'
+
+
+def pie(lang):
+    t = L[lang]
+    lista = SERVICIOS if lang == "es" else SERVICIOS_EN
+    enlaces = "\n".join(f'      <a href="{ruta(s, lang)}">{e(s["corto"])}</a>' for s in lista)
     return f"""<footer class="pie oscuro">
   <div class="wrap pie-in">
     <div class="pie-marca">
       <img src="/assets/img/logo-blanco.png" alt="CBdesign" width="225" height="72" loading="lazy">
-      <p>Desarrollo web y marketing digital en Cali para empresas que quieren crecer.</p>
+      <p>{t['pie_p']}</p>
     </div>
-    <nav aria-label="Servicios">
-      <h2>Servicios</h2>
+    <nav aria-label="{t['servicios']}">
+      <h2>{t['servicios']}</h2>
 {enlaces}
     </nav>
-    <nav aria-label="Empresa">
-      <h2>Empresa</h2>
-      <a href="/#proceso">Proceso</a>
-      <a href="https://portafolio.cbdesign.com.co" target="_blank" rel="noopener">Portafolio</a>
-      <a href="/#dominios">Buscar dominio</a>
-      <a href="/#preguntas">Preguntas frecuentes</a>
+    <nav aria-label="{t['empresa']}">
+      <h2>{t['empresa']}</h2>
+      <a href="{t['raiz']}#proceso">{t['proceso']}</a>
+      <a href="https://portafolio.cbdesign.com.co" target="_blank" rel="noopener">{t['portafolio_c']}</a>
+      <a href="{t['raiz']}#dominios">{t['buscar']}</a>
+      <a href="{t['raiz']}#preguntas">{t['faq']}</a>
     </nav>
     <address>
-      <h2>Contacto</h2>
+      <h2>{t['contacto']}</h2>
       <a href="https://wa.me/573164956994" target="_blank" rel="noopener">WhatsApp +57 316 495 6994</a>
       <a href="mailto:contacto@cbdesign.com.co">contacto@cbdesign.com.co</a>
       <span>Calle 6 # 9-45, Cali, Colombia</span>
     </address>
   </div>
   <div class="wrap pie-legal">
-    <p>© <span id="anio">2026</span> CBdesign. Una marca de Commonbird · NIT 900792449. Todos los derechos reservados.</p>
+    <p>© <span id="anio">2026</span> {t['legal']}</p>
   </div>
 </footer>"""
 
 
-def pagina(s):
-    url = f"{BASE}/{s['slug']}/"
+def pagina(s, lang):
+    t = L[lang]
+    url = BASE + ruta(s, lang)
+    otra = pareja(s, lang)
+    otro = "en" if lang == "es" else "es"
+    url_es = BASE + ruta(s if lang == "es" else otra, "es")
+    url_en = BASE + ruta(s if lang == "en" else otra, "en")
+    lista = SERVICIOS if lang == "es" else SERVICIOS_EN
+    if lang == "es":
+        area = [{"@type": "City", "name": "Cali"}, {"@type": "AdministrativeArea", "name": "Valle del Cauca"}, {"@type": "Country", "name": "Colombia"}]
+    else:
+        area = [{"@type": "Country", "name": "United States"}, {"@type": "Country", "name": "Colombia"}]
     ld = {
         "@context": "https://schema.org",
         "@graph": [
-            {
-                "@type": "Service",
-                "@id": url + "#servicio",
-                "name": s["h1"].rstrip("."),
-                "serviceType": s["corto"],
-                "description": s["desc"],
-                "url": url,
-                "provider": {"@id": BASE + "/#organizacion"},
-                "areaServed": [
-                    {"@type": "City", "name": "Cali"},
-                    {"@type": "AdministrativeArea", "name": "Valle del Cauca"},
-                    {"@type": "Country", "name": "Colombia"},
-                ],
-            },
-            {
-                "@type": "WebPage",
-                "@id": url + "#pagina",
-                "url": url,
-                "name": s["title"],
-                "description": s["desc"],
-                "inLanguage": "es-CO",
-                "isPartOf": {"@id": BASE + "/#sitio"},
-                "about": {"@id": url + "#servicio"},
-                "breadcrumb": {"@id": url + "#migas"},
-            },
-            {
-                "@type": "BreadcrumbList",
-                "@id": url + "#migas",
-                "itemListElement": [
-                    {"@type": "ListItem", "position": 1, "name": "Inicio", "item": BASE + "/"},
-                    {"@type": "ListItem", "position": 2, "name": s["corto"], "item": url},
-                ],
-            },
-            {
-                "@type": "FAQPage",
-                "@id": url + "#preguntas",
-                "mainEntity": [
-                    {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}}
-                    for q, a in s["faqs"]
-                ],
-            },
+            {"@type": "Service", "@id": url + "#servicio", "name": s["h1"].rstrip("."), "serviceType": s["corto"],
+             "description": s["desc"], "url": url, "provider": {"@id": BASE + "/#organizacion"}, "areaServed": area},
+            {"@type": "WebPage", "@id": url + "#pagina", "url": url, "name": s["title"], "description": s["desc"],
+             "inLanguage": t["html_lang"], "isPartOf": {"@id": BASE + "/#sitio"}, "about": {"@id": url + "#servicio"},
+             "breadcrumb": {"@id": url + "#migas"}},
+            {"@type": "BreadcrumbList", "@id": url + "#migas", "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": t["inicio"], "item": BASE + t["raiz"]},
+                {"@type": "ListItem", "position": 2, "name": s["corto"], "item": url}]},
+            {"@type": "FAQPage", "@id": url + "#preguntas", "mainEntity": [
+                {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in s["faqs"]]},
         ],
     }
+    etiqueta = (lambda p: PROYECTOS[p][2]) if lang == "es" else (lambda p: PROYECTOS_EN[p])
     intro = "\n".join(f"        <p>{e(p)}</p>" for p in s["intro"])
-    incluye = "\n".join(
-        f'        <li class="reveal"><h3>{e(t)}</h3><p>{e(d)}</p></li>' for t, d in s["incluye"]
-    )
+    incluye = "\n".join(f'        <li class="reveal"><h3>{e(a)}</h3><p>{e(d)}</p></li>' for a, d in s["incluye"])
     pasos = "\n".join(
-        f'        <li class="reveal"><span class="paso-n">0{i}</span><h3>{e(t)}</h3><p>{e(d)}</p></li>'
-        for i, (t, d) in enumerate(s["pasos"], 1)
-    )
+        f'        <li class="reveal"><span class="paso-n">0{i}</span><h3>{e(a)}</h3><p>{e(d)}</p></li>'
+        for i, (a, d) in enumerate(s["pasos"], 1))
     proys = "\n".join(
         f'        <li class="reveal"><a class="proy" href="{PROYECTOS[p][1]}" target="_blank" rel="noopener">'
-        f'<img src="/assets/img/{p}.webp" alt="Sitio de {e(PROYECTOS[p][0])}, desarrollado por CBdesign" width="720" height="496" loading="lazy" decoding="async">'
-        f'<div class="proy-txt"><span>{e(PROYECTOS[p][2])}</span><h3>{e(PROYECTOS[p][0])}</h3></div></a></li>'
-        for p in s["proyectos"]
-    )
+        f'<img src="/assets/img/{p}.webp" alt="{e(t["alt_proy"].format(n=PROYECTOS[p][0]))}" width="720" height="496" loading="lazy" decoding="async">'
+        f'<div class="proy-txt"><span>{e(etiqueta(p))}</span><h3>{e(PROYECTOS[p][0])}</h3></div></a></li>'
+        for p in s["proyectos"])
     faqs = "\n".join(
-        f'        <details class="reveal"><summary><h3>{e(q)}</h3></summary><p>{e(a)}</p></details>'
-        for q, a in s["faqs"]
-    )
+        f'        <details class="reveal"><summary><h3>{e(q)}</h3></summary><p>{e(a)}</p></details>' for q, a in s["faqs"])
     otros = "\n".join(
-        f'        <li><a href="/{o["slug"]}/">{e(o["corto"])} en Cali <span aria-hidden="true">›</span></a></li>'
-        for o in SERVICIOS
-        if o["slug"] != s["slug"]
-    )
+        f'        <li><a href="{ruta(o, lang)}">{e(o["corto"])}{t["sufijo"]} <span aria-hidden="true">›</span></a></li>'
+        for o in lista if o["slug"] != s["slug"])
+    nav = "\n".join(f'      <a href="{t["raiz"]}#{a}">{n}</a>' for a, n in t["nav"])
+    geo = '<meta name="geo.region" content="CO-VAC">\n<meta name="geo.placename" content="Cali">\n' if lang == "es" else ""
     return f"""<!DOCTYPE html>
-<html lang="es-CO">
+<html lang="{t['html_lang']}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -361,9 +397,10 @@ def pagina(s):
 <meta name="description" content="{e(s['desc'])}">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <link rel="canonical" href="{url}">
-<meta name="geo.region" content="CO-VAC">
-<meta name="geo.placename" content="Cali">
-<meta property="og:locale" content="es_CO">
+<link rel="alternate" hreflang="es" href="{url_es}">
+<link rel="alternate" hreflang="en" href="{url_en}">
+<link rel="alternate" hreflang="x-default" href="{url_es}">
+{geo}<meta property="og:locale" content="{t['og_locale']}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CBdesign">
 <meta property="og:title" content="{e(s['title'])}">
@@ -380,29 +417,26 @@ def pagina(s):
 <link rel="manifest" href="/site.webmanifest">
 <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/sitio.css?v={VERSION}">
-<meta name="cb-ga4" content="">
+<meta name="cb-ga4" content="{GA4}">
 <script>document.documentElement.classList.add('js')</script>
 <script type="application/ld+json">
 {json.dumps(ld, ensure_ascii=False, indent=1)}
 </script>
 </head>
 <body>
-<a class="saltar" href="#contenido">Saltar al contenido</a>
+<a class="saltar" href="#contenido">{t['saltar']}</a>
 
 <header class="nav" id="nav">
   <div class="nav-in">
-    <a class="logo" href="/" aria-label="CBdesign, inicio">
+    <a class="logo" href="{t['raiz']}" aria-label="{t['inicio_aria']}">
       <img src="/assets/img/logo-blanco.png" alt="CBdesign" width="225" height="72">
     </a>
-    <nav class="nav-links" id="menu" aria-label="Principal">
-      <a href="/#servicios">Servicios</a>
-      <a href="/#proceso">Proceso</a>
-      <a href="/#proyectos">Proyectos</a>
-      <a href="/#dominios">Dominios</a>
-      <a href="/#preguntas">Preguntas</a>
+    <nav class="nav-links" id="menu" aria-label="{t['nav_aria']}">
+{nav}
     </nav>
-    <a class="btn btn-brand btn-sm nav-cta" href="{wa(s['wa'])}" target="_blank" rel="noopener">Cotizar</a>
-    <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
+    {idioma_link(lang, ruta(otra, otro))}
+    <a class="btn btn-brand btn-sm nav-cta" href="{wa(s['wa'])}" target="_blank" rel="noopener">{t['cotizar']}</a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="{t['menu']}" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
   </div>
 </header>
 
@@ -410,13 +444,13 @@ def pagina(s):
   <section class="sub-hero oscuro">
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="wrap sub-hero-in">
-      <nav class="migas" aria-label="Ruta de navegación"><a href="/">Inicio</a><span aria-hidden="true">›</span><span aria-current="page">{e(s['corto'])}</span></nav>
+      <nav class="migas" aria-label="{t['migas_aria']}"><a href="{t['raiz']}">{t['inicio']}</a><span aria-hidden="true">›</span><span aria-current="page">{e(s['corto'])}</span></nav>
       <p class="eyebrow">{e(s['eyebrow'])}</p>
       <h1>{e(s['h1'])}</h1>
       <p class="lead">{e(s['lead'])}</p>
       <div class="acciones">
-        <a class="btn btn-brand" href="{wa(s['wa'])}" target="_blank" rel="noopener">Cotizar por WhatsApp</a>
-        <a class="btn btn-link" href="#incluye">Ver qué incluye <span aria-hidden="true">›</span></a>
+        <a class="btn btn-brand" href="{wa(s['wa'])}" target="_blank" rel="noopener">{t['cta']}</a>
+        <a class="btn btn-link" href="#incluye">{t['ver_incluye']} <span aria-hidden="true">›</span></a>
       </div>
     </div>
   </section>
@@ -426,7 +460,7 @@ def pagina(s):
       <div class="prosa reveal">
 {intro}
       </div>
-      <h2 class="reveal sub-h2">Qué incluye</h2>
+      <h2 class="reveal sub-h2">{t['incluye']}</h2>
       <ul class="incluye">
 {incluye}
       </ul>
@@ -436,8 +470,8 @@ def pagina(s):
   <section class="seccion oscuro">
     <div class="wrap">
       <header class="cabecera">
-        <p class="eyebrow reveal">Proceso</p>
-        <h2 class="reveal">Cómo trabajamos contigo.</h2>
+        <p class="eyebrow reveal">{t['proceso']}</p>
+        <h2 class="reveal">{t['proceso_h2']}</h2>
       </header>
       <ol class="pasos-mini">
 {pasos}
@@ -448,21 +482,21 @@ def pagina(s):
   <section class="seccion claro">
     <div class="wrap">
       <header class="cabecera">
-        <p class="eyebrow reveal">Proyectos</p>
-        <h2 class="reveal">Trabajo real, en línea hoy.</h2>
+        <p class="eyebrow reveal">{t['proyectos']}</p>
+        <h2 class="reveal">{t['proyectos_h2']}</h2>
       </header>
       <ul class="proy-grid">
 {proys}
       </ul>
-      <p class="reveal mas-proy"><a class="btn btn-oscuro" href="https://portafolio.cbdesign.com.co" target="_blank" rel="noopener">Ver el portafolio completo</a></p>
+      <p class="reveal mas-proy"><a class="btn btn-oscuro" href="https://portafolio.cbdesign.com.co" target="_blank" rel="noopener">{t['portafolio']}</a></p>
     </div>
   </section>
 
   <section class="seccion claro sin-tope" id="preguntas">
     <div class="wrap faq-wrap">
       <header class="cabecera">
-        <p class="eyebrow reveal">Preguntas frecuentes</p>
-        <h2 class="reveal">Lo que suelen preguntarnos.</h2>
+        <p class="eyebrow reveal">{t['faq']}</p>
+        <h2 class="reveal">{t['faq_h2']}</h2>
       </header>
       <div class="faq">
 {faqs}
@@ -473,22 +507,22 @@ def pagina(s):
   <section class="cierre oscuro" id="contacto">
     <div class="cierre-glow" aria-hidden="true"></div>
     <div class="wrap centro">
-      <h2 class="reveal cierre-h">Hablemos de <span class="grad">tu proyecto.</span></h2>
-      <p class="lead reveal">Estamos en Cali, en la Calle 6 # 9-45, y trabajamos con empresas de todo el Valle del Cauca y de otros países.</p>
+      <h2 class="reveal cierre-h">{t['cierre']}</h2>
+      <p class="lead reveal">{t['cierre_p']}</p>
       <div class="acciones reveal">
-        <a class="btn btn-brand btn-xl" href="{wa(s['wa'])}" target="_blank" rel="noopener">Escribir por WhatsApp</a>
-        <a class="btn btn-link" href="tel:+573164956994">316 495 6994 <span aria-hidden="true">›</span></a>
+        <a class="btn btn-brand btn-xl" href="{wa(s['wa'])}" target="_blank" rel="noopener">{t['escribir']}</a>
+        <a class="btn btn-link" href="tel:+573164956994">+57 316 495 6994 <span aria-hidden="true">›</span></a>
       </div>
-      <ul class="otros reveal" aria-label="Otros servicios">
+      <ul class="otros reveal" aria-label="{t['otros_aria']}">
 {otros}
       </ul>
     </div>
   </section>
 </main>
 
-{pie()}
+{pie(lang)}
 
-<a class="wa" href="{wa(s['wa'])}" target="_blank" rel="noopener" aria-label="Escribir a CBdesign por WhatsApp">
+<a class="wa" href="{wa(s['wa'])}" target="_blank" rel="noopener" aria-label="{t['wa_aria']}">
   {ICONO_WA}
 </a>
 
@@ -499,18 +533,12 @@ def pagina(s):
 
 
 def main():
-    for s in SERVICIOS:
-        d = RAIZ / s["slug"]
-        d.mkdir(exist_ok=True)
-        (d / "index.html").write_text(pagina(s), encoding="utf-8")
-        print("ok", s["slug"])
-    hoy = datetime.date.today().isoformat()
-    urls = [BASE + "/"] + [f"{BASE}/{s['slug']}/" for s in SERVICIOS]
-    cuerpo = "\n".join(f"  <url>\n    <loc>{u}</loc>\n    <lastmod>{hoy}</lastmod>\n  </url>" for u in urls)
-    (RAIZ / "sitemap.xml").write_text(
-        '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-        + cuerpo + "\n</urlset>\n", encoding="utf-8")
-    print("ok sitemap.xml")
+    for lang, lista in (("es", SERVICIOS), ("en", SERVICIOS_EN)):
+        for s in lista:
+            d = RAIZ / ruta(s, lang).strip("/")
+            d.mkdir(parents=True, exist_ok=True)
+            (d / "index.html").write_text(pagina(s, lang), encoding="utf-8")
+            print("ok", ruta(s, lang))
 
 
 if __name__ == "__main__":

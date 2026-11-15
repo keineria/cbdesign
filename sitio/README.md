@@ -8,6 +8,8 @@ Rediseño de [cbdesign.com.co](https://cbdesign.com.co). Sitio estático (HTML, 
 - `assets/sitio.css`, `assets/sitio.js`: estilos y comportamiento.
 - `assets/img/`, `assets/fonts/`: imágenes en WebP y la fuente Inter alojada en el propio sitio.
 - `<servicio>-cali/index.html`: páginas de servicio para SEO local. Se generan con `python3 tools/generar-servicios.py` (los textos están en ese archivo); no se editan a mano.
+- `en/`: versión en inglés. `en/index.html` se genera desde `index.html` con `python3 tools/generar-ingles.py` (traducciones en `tools/inicio_en.py`; el script también escribe `sitemap.xml`). Las páginas `en/<servicio>/` salen de `tools/generar-servicios.py` con los textos de `tools/servicios_en.py`. Después de cambiar `index.html` hay que volver a correr los dos scripts.
+- Idioma por defecto: `.htaccess` envía al inicio en inglés a quien entra a `/` con el navegador en inglés. La elección del visitante se guarda en la cookie `cb_idioma`.
 - `api/dominios.php`: buscador de dominios.
 - `robots.txt`, `sitemap.xml`, `site.webmanifest`, `.htaccess`, `404.html`.
 

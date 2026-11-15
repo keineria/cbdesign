@@ -5,6 +5,21 @@
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
   const calma = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const WA = 'https://wa.me/573164956994?text=';
+  /* Idioma: los textos que pone el script salen en el idioma de la página */
+  const EN = (document.documentElement.lang || '').toLowerCase().startsWith('en');
+  const t = (es, en) => (EN ? en : es);
+  /* Recuerda el idioma elegido para que el servidor no vuelva a redirigir el inicio */
+  const guardarIdioma = (v) => { document.cookie = 'cb_idioma=' + v + ';path=/;max-age=31536000;SameSite=Lax'; };
+  const pedido = new URLSearchParams(location.search).get('lang');
+  if (pedido === 'es' || pedido === 'en') {
+    guardarIdioma(pedido);
+    const u = new URL(location.href); u.searchParams.delete('lang');
+    history.replaceState(null, '', u.pathname + u.search + u.hash);
+  }
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[data-idioma]');
+    if (a) guardarIdioma(a.dataset.idioma);
+  });
 
   /* Transición compartida: usa View Transitions si el navegador la soporta */
   const transicion = (fn) => {
@@ -41,12 +56,12 @@
 
   /* ---------- Menú móvil ---------- */
   const toggle = $('#nav-toggle'), menu = $('#menu');
-  const cerrarMenu = () => { menu.classList.remove('abierto'); toggle.setAttribute('aria-expanded', 'false'); toggle.setAttribute('aria-label', 'Abrir menú'); };
+  const cerrarMenu = () => { menu.classList.remove('abierto'); toggle.setAttribute('aria-expanded', 'false'); toggle.setAttribute('aria-label', t('Abrir menú', 'Open menu')); };
   toggle.addEventListener('click', () => {
     const abre = !menu.classList.contains('abierto');
     menu.classList.toggle('abierto', abre);
     toggle.setAttribute('aria-expanded', String(abre));
-    toggle.setAttribute('aria-label', abre ? 'Cerrar menú' : 'Abrir menú');
+    toggle.setAttribute('aria-label', abre ? t('Cerrar menú', 'Close menu') : t('Abrir menú', 'Open menu'));
   });
   menu.addEventListener('click', (e) => { if (e.target.closest('a')) cerrarMenu(); });
 
@@ -163,7 +178,7 @@
     svc.setAttribute('aria-label', $('h3', svc).textContent);
     const b = $('.svc-abrir', svc);
     b.dataset.etiqueta = b.getAttribute('aria-label');
-    b.setAttribute('aria-label', 'Cerrar');
+    b.setAttribute('aria-label', t('Cerrar', 'Close'));
     b.focus({ preventScroll: true });
     abierta = svc;
   };
@@ -225,7 +240,9 @@
   /* ---------- Buscador de dominios ---------- */
   const form = $('#dom-form'), campo = $('#dom-q'), lista = $('#dom-res'), msg = $('#dom-msg');
   const TLDS = ['com', 'co', 'com.co', 'net', 'org', 'store', 'online', 'app', 'io', 'dev'];
-  const ETIQUETA = { available: 'Disponible', likely: 'Posiblemente disponible', taken: 'Ocupado', unknown: 'Sin confirmar', wait: 'Consultando' };
+  const ETIQUETA = EN
+    ? { available: 'Available', likely: 'Probably available', taken: 'Taken', unknown: 'Unconfirmed', wait: 'Checking' }
+    : { available: 'Disponible', likely: 'Posiblemente disponible', taken: 'Ocupado', unknown: 'Sin confirmar', wait: 'Consultando' };
   const CLASE = { available: 'libre', likely: 'libre posible', taken: 'ocupado', unknown: 'duda', wait: 'espera' };
   /* extensiones cuyo registro ofrece RDAP público (para el respaldo desde el navegador) */
   const CON_RDAP = ['com', 'net', 'org', 'store', 'online', 'app', 'dev'];
@@ -260,9 +277,9 @@
       a.className = 'btn btn-sm ' + (r.status === 'available' ? 'btn-brand' : 'btn-link');
       a.target = '_blank'; a.rel = 'noopener';
       a.href = WA + encodeURIComponent(r.status === 'available'
-        ? `Hola CBdesign, quiero registrar el dominio ${r.domain}.`
-        : `Hola CBdesign, ¿me ayudan a confirmar si el dominio ${r.domain} está disponible? Quiero registrarlo.`);
-      a.textContent = r.status === 'available' ? 'Registrar' : r.status === 'likely' ? 'Confirmar' : 'Consultar';
+        ? t(`Hola CBdesign, quiero registrar el dominio ${r.domain}.`, `Hi CBdesign, I would like to register the domain ${r.domain}.`)
+        : t(`Hola CBdesign, ¿me ayudan a confirmar si el dominio ${r.domain} está disponible? Quiero registrarlo.`, `Hi CBdesign, can you help me confirm whether the domain ${r.domain} is available? I would like to register it.`));
+      a.textContent = r.status === 'available' ? t('Registrar', 'Register') : r.status === 'likely' ? t('Confirmar', 'Confirm') : t('Consultar', 'Ask us');
       li.append(a);
     } else {
       const h = document.createElement('span'); h.className = 'hueco'; li.append(h);
@@ -289,7 +306,7 @@
     const { nombre, tld } = limpiar(texto);
     msg.className = 'dom-msg';
     if (!valido(nombre)) {
-      msg.textContent = 'Escribe un nombre válido: solo letras, números y guiones (mínimo 2 caracteres).';
+      msg.textContent = t('Escribe un nombre válido: solo letras, números y guiones (mínimo 2 caracteres).', 'Enter a valid name: letters, numbers and hyphens only (at least 2 characters).');
       msg.classList.add('error');
       lista.replaceChildren();
       campo.focus();
@@ -301,17 +318,17 @@
     let res = orden.map((t) => ({ domain: `${nombre}.${t}`, status: 'wait' }));
     campo.value = tld ? `${nombre}.${tld}` : nombre;
     form.classList.add('cargando');
-    msg.textContent = 'Consultando disponibilidad…';
+    msg.textContent = t('Consultando disponibilidad…', 'Checking availability…');
     pintarLista(res);
 
     let datos = null;
     try {
       const ctl = new AbortController();
       const reloj = setTimeout(() => ctl.abort(), 15000);
-      const r = await fetch(`api/dominios.php?q=${encodeURIComponent(nombre)}${tld ? '&tld=' + tld : ''}`, { signal: ctl.signal, headers: { Accept: 'application/json' } });
+      const r = await fetch(`/api/dominios.php?q=${encodeURIComponent(nombre)}${tld ? '&tld=' + tld : ''}`, { signal: ctl.signal, headers: { Accept: 'application/json' } });
       clearTimeout(reloj);
       if (r.status === 429) {
-        if (mio === turno) { msg.textContent = 'Hiciste muchas búsquedas seguidas. Espera un momento e inténtalo de nuevo.'; msg.classList.add('error'); lista.replaceChildren(); form.classList.remove('cargando'); }
+        if (mio === turno) { msg.textContent = t('Hiciste muchas búsquedas seguidas. Espera un momento e inténtalo de nuevo.', 'Too many searches in a row. Wait a moment and try again.'); msg.classList.add('error'); lista.replaceChildren(); form.classList.remove('cargando'); }
         return;
       }
       if (r.ok && (r.headers.get('content-type') || '').includes('json')) datos = await r.json();
@@ -329,10 +346,10 @@
     form.classList.remove('cargando');
     const libres = res.filter((x) => x.status === 'available' || x.status === 'likely').length;
     const dudas = res.filter((x) => x.status === 'unknown').length;
-    if (dudas === res.length) { msg.textContent = 'No pudimos consultar los registros en este momento. Escríbenos y lo verificamos por ti.'; msg.classList.add('error'); }
-    else if (libres) msg.textContent = libres === 1 ? 'Hay 1 opción disponible para tu marca.' : `Hay ${libres} opciones disponibles para tu marca.`;
-    else if (dudas) msg.textContent = 'No encontramos opciones libres confirmadas. Escríbenos y revisamos las que quedaron sin confirmar.';
-    else msg.textContent = 'Esas opciones ya están registradas. Prueba con otra variación del nombre.';
+    if (dudas === res.length) { msg.textContent = t('No pudimos consultar los registros en este momento. Escríbenos y lo verificamos por ti.', 'We could not reach the registries right now. Message us and we will check it for you.'); msg.classList.add('error'); }
+    else if (libres) msg.textContent = libres === 1 ? t('Hay 1 opción disponible para tu marca.', 'There is 1 option available for your brand.') : t(`Hay ${libres} opciones disponibles para tu marca.`, `There are ${libres} options available for your brand.`);
+    else if (dudas) msg.textContent = t('No encontramos opciones libres confirmadas. Escríbenos y revisamos las que quedaron sin confirmar.', 'We found no confirmed available options. Message us and we will check the unconfirmed ones.');
+    else msg.textContent = t('Esas opciones ya están registradas. Prueba con otra variación del nombre.', 'Those options are already registered. Try another variation of the name.');
   };
   if (form) {
     form.addEventListener('submit', (e) => { e.preventDefault(); buscar(campo.value); });
