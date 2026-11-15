@@ -12,6 +12,29 @@
     return document.startViewTransition(fn).finished.catch(() => {});
   };
 
+  /* ---------- Medición (Google Analytics 4) ----------
+     Se activa al poner el ID de medición en <meta name="cb-ga4" content="G-XXXXXXXXXX">.
+     Registra como eventos los contactos que luego se usan como conversiones en Google Ads. */
+  const ga4 = (($('meta[name="cb-ga4"]') || {}).content || '').trim();
+  window.dataLayer = window.dataLayer || [];
+  const gtag = function () { window.dataLayer.push(arguments); };
+  if (/^G-[A-Z0-9]+$/.test(ga4)) {
+    const sc = document.createElement('script');
+    sc.async = true; sc.src = 'https://www.googletagmanager.com/gtag/js?id=' + ga4;
+    document.head.append(sc);
+    gtag('js', new Date()); gtag('config', ga4);
+  }
+  const evento = (nombre, datos) => gtag('event', nombre, datos || {});
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (!a) return;
+    const h = a.getAttribute('href');
+    const zona = (a.closest('section[id],footer,header') || {}).id || (a.classList.contains('wa') ? 'flotante' : 'otro');
+    if (h.includes('wa.me/')) evento('contacto_whatsapp', { zona, dominio: a.closest('[data-dominio]') ? a.closest('[data-dominio]').dataset.dominio : undefined });
+    else if (h.startsWith('tel:')) evento('contacto_llamada', { zona });
+    else if (h.startsWith('mailto:')) evento('contacto_correo', { zona });
+  });
+
   /* ---------- Año ---------- */
   const anio = $('#anio');
   if (anio) anio.textContent = new Date().getFullYear();
@@ -65,7 +88,7 @@
   /* ---------- Animaciones ligadas al scroll ---------- */
   const mock = $('#hero-mock'), escena = $('#escena'), lienzo = $('.lienzo'), barra = $('#escena-progreso');
   const pasos = $$('.paso'), wa = $('.wa'), nav = $('#nav');
-  const enlaces = $$('.nav-links a'), secciones = enlaces.map((a) => $(a.getAttribute('href'))).filter(Boolean);
+  const enlaces = $$('.nav-links a[href^="#"]'), secciones = enlaces.map((a) => $(a.getAttribute('href'))).filter(Boolean);
   let pendiente = false;
   const limitar = (v) => Math.max(0, Math.min(1, v));
   const pintar = () => {
@@ -168,7 +191,7 @@
       if (svc !== abierta) abrir(svc);
     });
   });
-  telon.addEventListener('click', cerrar);
+  if (telon) telon.addEventListener('click', cerrar);
   addEventListener('keydown', (e) => {
     if (!abierta) return;
     if (e.key === 'Escape') { cerrar(); return; }
@@ -273,6 +296,7 @@
       return;
     }
     const mio = ++turno;
+    evento('busqueda_dominio', { termino: nombre });
     const orden = tld ? [tld, ...TLDS.filter((t) => t !== tld)] : TLDS;
     let res = orden.map((t) => ({ domain: `${nombre}.${t}`, status: 'wait' }));
     campo.value = tld ? `${nombre}.${tld}` : nombre;

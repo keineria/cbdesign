@@ -7,6 +7,7 @@ Rediseño de [cbdesign.com.co](https://cbdesign.com.co). Sitio estático (HTML, 
 - `index.html`: la página, con metadatos SEO y datos estructurados (Organization, WebSite, WebPage, FAQPage).
 - `assets/sitio.css`, `assets/sitio.js`: estilos y comportamiento.
 - `assets/img/`, `assets/fonts/`: imágenes en WebP y la fuente Inter alojada en el propio sitio.
+- `<servicio>-cali/index.html`: páginas de servicio para SEO local. Se generan con `python3 tools/generar-servicios.py` (los textos están en ese archivo); no se editan a mano.
 - `api/dominios.php`: buscador de dominios.
 - `robots.txt`, `sitemap.xml`, `site.webmanifest`, `.htaccess`, `404.html`.
 
@@ -31,3 +32,7 @@ Después de publicar: enviar `https://cbdesign.com.co/sitemap.xml` en Google Sea
 ## Ver en local
 
 `php -S localhost:8000` dentro de esta carpeta y abrir `http://localhost:8000`.
+
+## Medición
+
+Para activar Google Analytics 4, pon el ID de medición en `<meta name="cb-ga4" content="G-XXXXXXXXXX">` de `index.html` y en `tools/generar-servicios.py`, y vuelve a generar las páginas. El sitio envía estos eventos: `contacto_whatsapp`, `contacto_llamada`, `contacto_correo` y `busqueda_dominio`.
