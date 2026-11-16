@@ -387,6 +387,10 @@ html:not(.js) .wa{opacity:1;transform:none;pointer-events:auto}
 .local-nap{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:26px;font-style:normal;font-size:.98rem;color:var(--gris-c)}
 .local-nap b{color:var(--tinta)}
 .local-nap a{color:var(--brand-d);font-weight:600}
+.local-ciudades{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.local-ciudades a{display:block;padding:8px 15px;border:1px solid #d2d2d7;border-radius:980px;font-size:.9rem;font-weight:600;color:var(--tinta);transition:color .2s,border-color .2s}
+.local-ciudades a:hover{color:var(--brand-d);border-color:var(--brand-d)}
+.otros-ciudades{margin-top:0}
 .local-serv{display:grid}
 .local-serv a,.otros a{display:flex;justify-content:space-between;gap:14px;padding:15px 0;border-top:1px solid #e8e8ed;font-weight:600;letter-spacing:-.02em;transition:color .2s,padding .35s var(--ease)}
 .local-serv li:last-child a{border-bottom:1px solid #e8e8ed}

@@ -153,6 +153,8 @@ def sitemap():
                     f'    <xhtml:link rel="alternate" hreflang="x-default" href="{BASE}{es}"/>\n')
         for u in (es, en):
             filas.append(f"  <url>\n    <loc>{BASE}{u}</loc>\n    <lastmod>{hoy}</lastmod>\n{alternos}  </url>\n")
+    for c in gs.CIUDADES:  # solo en español
+        filas.append(f"  <url>\n    <loc>{BASE}/{c['slug']}/</loc>\n    <lastmod>{hoy}</lastmod>\n  </url>\n")
     (RAIZ / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
         + "".join(filas) + "</urlset>\n", encoding="utf-8")

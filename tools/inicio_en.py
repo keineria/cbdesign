@@ -72,7 +72,7 @@ T = {
     "Saltar al contenido": "Skip to content",
     "Servicios": "Services", "Proceso": "Process", "Proyectos": "Work", "Dominios": "Domains",
     "Agente IA": "AI agent", "Preguntas": "FAQ", "Iniciar proyecto": "Start a project",
-    "Desarrollo web y marketing digital en Cali": "Nearshore web design and development",
+    "Desarrollo web y marketing digital en Cali y toda Colombia": "Nearshore web design and development",
     "Diseñamos y desarrollamos sitios web, tiendas virtuales y herramientas a la medida para que tu empresa venda más y opere mejor.":
         "We design and build websites, online stores and custom tools so your company sells more and runs better.",
     "Ver proyectos": "See our work",
@@ -253,7 +253,7 @@ T = {
     "Cuéntanos qué necesitas. Te respondemos con una ruta clara para llegar a tu meta.":
         "Tell us what you need. We will reply with a clear route to reach your goal.",
     "Escribir por WhatsApp": "Message us on WhatsApp",
-    "Desarrollo web y marketing digital en Cali para empresas que quieren crecer.":
+    "Desarrollo web y marketing digital para empresas de Cali y de toda Colombia.":
         "Nearshore web development and digital marketing for companies that want to grow.",
     "Diseño de páginas web": "Web design", "Posicionamiento SEO": "SEO services", "Marketing digital": "Digital marketing",
     "Agentes de IA para WhatsApp": "AI agents for WhatsApp",

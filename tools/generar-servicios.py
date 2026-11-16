@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Genera las páginas de servicio de cbdesign.com.co (SEO local para Cali).
+"""Genera las páginas de servicio y las páginas por ciudad de cbdesign.com.co.
 
 Uso:  python3 tools/generar-servicios.py
 Escribe sitio/<slug>/index.html (español) y sitio/en/<slug>/index.html (inglés, textos en
@@ -17,7 +17,7 @@ from urllib.parse import quote
 RAIZ = pathlib.Path(__file__).resolve().parent.parent / "sitio"
 BASE = "https://cbdesign.com.co"
 WA = "https://wa.me/573164956994?text="
-VERSION = "3"  # súbelo al cambiar CSS o JS
+VERSION = "4"  # súbelo al cambiar CSS o JS
 
 PROYECTOS = {
     "fajasmelibelt": ("Fajas Melibelt", "https://fajasmelibelt.com", "Tienda virtual · Colombia"),
@@ -246,6 +246,7 @@ SERVICIOS = [
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from servicios_en import PROYECTOS_EN, SERVICIOS_EN  # noqa: E402
+from ciudades import CIUDADES  # noqa: E402
 
 e = html.escape
 ICONO_WA = re.search(r'<a class="wa".*?(<svg.*?</svg>)', (RAIZ / "index.html").read_text(encoding="utf-8"), re.S).group(1)
@@ -265,9 +266,9 @@ L = {
         alt_proy="Sitio de {n}, desarrollado por CBdesign", portafolio="Ver el portafolio completo",
         faq="Preguntas frecuentes", faq_h2="Lo que suelen preguntarnos.",
         cierre='Hablemos de <span class="grad">tu proyecto.</span>',
-        cierre_p="Estamos en Cali, en la Calle 6 # 9-45, y trabajamos con empresas de todo el Valle del Cauca y de otros países.",
+        cierre_p="Estamos en Cali, en la Calle 6 # 9-45, y trabajamos con empresas de Bogotá, Medellín, Barranquilla y todo el país.",
         escribir="Escribir por WhatsApp", otros_aria="Otros servicios", sufijo=" en Cali", wa_aria="Escribir a CBdesign por WhatsApp",
-        pie_p="Desarrollo web y marketing digital en Cali para empresas que quieren crecer.",
+        pie_p="Desarrollo web y marketing digital para empresas de Cali y de toda Colombia.",
         servicios="Servicios", empresa="Empresa", portafolio_c="Portafolio", buscar="Buscar dominio", contacto="Contacto",
         legal="CBdesign. Una marca de Commonbird · NIT 900792449. Todos los derechos reservados.",
         otro_idioma=("EN", "en", "English"),
@@ -346,12 +347,17 @@ def pie(lang):
 def pagina(s, lang):
     t = L[lang]
     url = BASE + ruta(s, lang)
-    otra = pareja(s, lang)
+    ciudad = s.get("ciudad")  # las páginas por ciudad solo existen en español
+    otra = None if ciudad else pareja(s, lang)
     otro = "en" if lang == "es" else "es"
-    url_es = BASE + ruta(s if lang == "es" else otra, "es")
-    url_en = BASE + ruta(s if lang == "en" else otra, "en")
+    url_es = url if ciudad else BASE + ruta(s if lang == "es" else otra, "es")
+    url_en = None if ciudad else BASE + ruta(s if lang == "en" else otra, "en")
+    alt_en = f'<link rel="alternate" hreflang="en" href="{url_en}">\n' if url_en else ""
+    href_otro = ruta(otra, otro) if otra else "/en/"
     lista = SERVICIOS if lang == "es" else SERVICIOS_EN
-    if lang == "es":
+    if ciudad:
+        area = [{"@type": "City", "name": ciudad}, {"@type": "Country", "name": "Colombia"}]
+    elif lang == "es":
         area = [{"@type": "City", "name": "Cali"}, {"@type": "AdministrativeArea", "name": "Valle del Cauca"}, {"@type": "Country", "name": "Colombia"}]
     else:
         area = [{"@type": "Country", "name": "United States"}, {"@type": "Country", "name": "Colombia"}]
@@ -384,10 +390,16 @@ def pagina(s, lang):
     faqs = "\n".join(
         f'        <details class="reveal"><summary><h3>{e(q)}</h3></summary><p>{e(a)}</p></details>' for q, a in s["faqs"])
     otros = "\n".join(
-        f'        <li><a href="{ruta(o, lang)}">{e(o["corto"])}{t["sufijo"]} <span aria-hidden="true">›</span></a></li>'
+        f'        <li><a href="{ruta(o, lang)}">{e(o["corto"])}{"" if ciudad else t["sufijo"]} <span aria-hidden="true">›</span></a></li>'
         for o in lista if o["slug"] != s["slug"])
+    ciudades = ""
+    if lang == "es":
+        filas = "\n".join(
+            f'        <li><a href="/{c["slug"]}/">{e(c["corto"])} <span aria-hidden="true">›</span></a></li>'
+            for c in CIUDADES if c["slug"] != s["slug"])
+        ciudades = f'\n      <ul class="otros otros-ciudades reveal" aria-label="Otras ciudades">\n{filas}\n      </ul>'
     nav = "\n".join(f'      <a href="{t["raiz"]}#{a}">{n}</a>' for a, n in t["nav"])
-    geo = '<meta name="geo.region" content="CO-VAC">\n<meta name="geo.placename" content="Cali">\n' if lang == "es" else ""
+    geo = '<meta name="geo.region" content="CO-VAC">\n<meta name="geo.placename" content="Cali">\n' if lang == "es" and not ciudad else ""
     return f"""<!DOCTYPE html>
 <html lang="{t['html_lang']}">
 <head>
@@ -398,8 +410,7 @@ def pagina(s, lang):
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <link rel="canonical" href="{url}">
 <link rel="alternate" hreflang="es" href="{url_es}">
-<link rel="alternate" hreflang="en" href="{url_en}">
-<link rel="alternate" hreflang="x-default" href="{url_es}">
+{alt_en}<link rel="alternate" hreflang="x-default" href="{url_es}">
 {geo}<meta property="og:locale" content="{t['og_locale']}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CBdesign">
@@ -434,7 +445,7 @@ def pagina(s, lang):
     <nav class="nav-links" id="menu" aria-label="{t['nav_aria']}">
 {nav}
     </nav>
-    {idioma_link(lang, ruta(otra, otro))}
+    {idioma_link(lang, href_otro)}
     <a class="btn btn-brand btn-sm nav-cta" href="{wa(s['wa'])}" target="_blank" rel="noopener">{t['cotizar']}</a>
     <button class="nav-toggle" id="nav-toggle" aria-label="{t['menu']}" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
   </div>
@@ -460,7 +471,7 @@ def pagina(s, lang):
       <div class="prosa reveal">
 {intro}
       </div>
-      <h2 class="reveal sub-h2">{t['incluye']}</h2>
+      <h2 class="reveal sub-h2">{e(s.get('incluye_h2', t['incluye']))}</h2>
       <ul class="incluye">
 {incluye}
       </ul>
@@ -508,14 +519,14 @@ def pagina(s, lang):
     <div class="cierre-glow" aria-hidden="true"></div>
     <div class="wrap centro">
       <h2 class="reveal cierre-h">{t['cierre']}</h2>
-      <p class="lead reveal">{t['cierre_p']}</p>
+      <p class="lead reveal">{e(s.get('cierre_p', t['cierre_p']))}</p>
       <div class="acciones reveal">
         <a class="btn btn-brand btn-xl" href="{wa(s['wa'])}" target="_blank" rel="noopener">{t['escribir']}</a>
         <a class="btn btn-link" href="tel:+573164956994">+57 316 495 6994 <span aria-hidden="true">›</span></a>
       </div>
       <ul class="otros reveal" aria-label="{t['otros_aria']}">
 {otros}
-      </ul>
+      </ul>{ciudades}
     </div>
   </section>
 </main>
@@ -533,7 +544,7 @@ def pagina(s, lang):
 
 
 def main():
-    for lang, lista in (("es", SERVICIOS), ("en", SERVICIOS_EN)):
+    for lang, lista in (("es", SERVICIOS + CIUDADES), ("en", SERVICIOS_EN)):
         for s in lista:
             d = RAIZ / ruta(s, lang).strip("/")
             d.mkdir(parents=True, exist_ok=True)
